@@ -1,156 +1,141 @@
 ﻿using FiapSmartCity.Models;
-using Microsoft.Extensions.Configuration;
-using Oracle.ManagedDataAccess.Client;
-using System;
+using FiapSmartCity.Repository.Context;
 using System.Collections.Generic;
-using System.IO;
+using System.Linq;
+
 
 namespace FiapSmartCity.Repository
 {
     public class TipoProdutoRepository
     {
-
-        private readonly string connectionString;
+        // Propriedade que terá a instância do DataBaseContext
+        private readonly DataBaseContext context;
 
         public TipoProdutoRepository()
         {
-            connectionString = new ConfigurationBuilder()
-                                        .SetBasePath(Directory.GetCurrentDirectory())
-                                        .AddJsonFile("appsettings.json")
-                                        .Build().GetConnectionString("FiapSmartCityConnection");
+            // Criando um instância da classe de contexto do EntityFramework
+            context = new DataBaseContext();
         }
 
 
         public IList<TipoProduto> Listar()
         {
-            IList<TipoProduto> lista = new List<TipoProduto>();
-
-            using (OracleConnection connection = new OracleConnection(connectionString))
-            {
-                String query =
-                    "SELECT IDTIPO, DESCRICAOTIPO, COMERCIALIZADO FROM TIPOPRODUTO  ";
-
-                OracleCommand command = new OracleCommand(query, connection);
-                connection.Open();
-                OracleDataReader dataReader = command.ExecuteReader();
-
-                while (dataReader.Read())
-                {
-                    // Recupera os dados
-                    TipoProduto tipoProd = new TipoProduto();
-                    tipoProd.IdTipo = Convert.ToInt32(dataReader["IDTIPO"]);
-                    tipoProd.DescricaoTipo = dataReader["DESCRICAOTIPO"].ToString();
-                    tipoProd.Comercializado = Convert.ToBoolean((dataReader["COMERCIALIZADO"] as string) == "1");
-
-
-                    // Adiciona o modelo da lista
-                    lista.Add(tipoProd);
-                }
-
-                connection.Close();
-
-            } // Finaliza o objeto connection
-
-            // Retorna a lista
-            return lista;
+            return context.TipoProduto.ToList();
         }
+
 
         public TipoProduto Consultar(int id)
         {
-
-            TipoProduto tipoProd = new TipoProduto();
-
-            using (OracleConnection connection = new OracleConnection(connectionString))
-            {
-                String query =
-                    "SELECT IDTIPO, DESCRICAOTIPO, COMERCIALIZADO FROM TIPOPRODUTO WHERE IDTIPO = :IDTIPO ";
-
-                OracleCommand command = new OracleCommand(query, connection);
-                command.Parameters.Add("IDTIPO", id);
-                connection.Open();
-
-                OracleDataReader dataReader = command.ExecuteReader();
-
-                while (dataReader.Read())
-                {
-                    // Recupera os dados
-                    tipoProd.IdTipo = Convert.ToInt32(dataReader["IDTIPO"]);
-                    tipoProd.DescricaoTipo = dataReader["DESCRICAOTIPO"].ToString();
-                    tipoProd.Comercializado = Convert.ToBoolean((dataReader["COMERCIALIZADO"] as string) == "1");
-                }
-
-                connection.Close();
-
-            } // Finaliza o objeto connection
-
-            // Retorna a lista
-            return tipoProd;
+            return context.TipoProduto.Find(id);
         }
+
 
         public void Inserir(TipoProduto tipoProduto)
         {
-            
-            using (OracleConnection connection = new OracleConnection(connectionString))
-            {
-                String query =
-                    "INSERT INTO TIPOPRODUTO ( DESCRICAOTIPO, COMERCIALIZADO ) VALUES ( :descr, :comerc ) ";
-
-                OracleCommand command = new OracleCommand(query, connection);
-
-                // Adicionando o valor ao comando
-                command.Parameters.Add("descr", tipoProduto.DescricaoTipo);
-                command.Parameters.Add("comerc", Convert.ToInt32(tipoProduto.Comercializado));
-
-                // Abrindo a conexão com  o Banco
-                connection.Open();
-                command.ExecuteNonQuery();
-                connection.Close();
-
-            }
+            context.TipoProduto.Add(tipoProduto);
+            context.SaveChanges();
         }
 
         public void Alterar(TipoProduto tipoProduto)
         {
-            using (OracleConnection connection = new OracleConnection(connectionString))
-            {
-                String query =
-                    "UPDATE TIPOPRODUTO SET DESCRICAOTIPO = :descr , COMERCIALIZADO = :comerc WHERE IDTIPO = :id  ";
+            // Informa o contexto que um objeto foi alterado
+            context.TipoProduto.Update(tipoProduto);
 
-                OracleCommand command = new OracleCommand(query, connection);
-
-                // Adicionando o valor ao comando
-                command.Parameters.Add("descr", tipoProduto.DescricaoTipo);
-                command.Parameters.Add("comerc", Convert.ToInt32(tipoProduto.Comercializado));
-                command.Parameters.Add("id", tipoProduto.IdTipo);
-
-                // Abrindo a conexão com  o Banco
-                connection.Open();
-                command.ExecuteNonQuery();
-                connection.Close();
-
-            }
+            // Salva as alterações
+            context.SaveChanges();
         }
 
         public void Excluir(int id)
         {
-            using (OracleConnection connection = new OracleConnection(connectionString))
+            // Criar um tipo produto apenas com o Id
+            var tipoProduto = new TipoProduto()
             {
-                String query =
-                    "DELETE TIPOPRODUTO WHERE IDTIPO = :id  ";
+                IdTipo = id
+            };
 
-                OracleCommand command = new OracleCommand(query, connection);
-
-                // Adicionando o valor ao comando
-                command.Parameters.Add("id", id);
-
-                // Abrindo a conexão com  o Banco
-                connection.Open();
-                command.ExecuteNonQuery();
-                connection.Close();
-            }
-
+            context.TipoProduto.Remove(tipoProduto);
+            context.SaveChanges();
         }
 
-    }
 
+
+
+        public IList<TipoProduto> ListarOrdenadoPorNome()
+        {
+            var lista =
+                context.TipoProduto.OrderBy(t => t.DescricaoTipo).ToList<TipoProduto>();
+
+            return lista;
+        }
+
+
+        public IList<TipoProduto> ListarOrdenadoPorNomeDescendente()
+        {
+            var lista =
+                context.TipoProduto.OrderByDescending(t => t.DescricaoTipo).ToList<TipoProduto>();
+
+            return lista;
+        }
+
+
+        public IList<TipoProduto> ListarTiposComercializados()
+        {
+            // Filtro com Where
+            var lista =
+                context.TipoProduto.Where(t => t.Comercializado == '0')
+                        .OrderByDescending(t => t.DescricaoTipo).ToList<TipoProduto>();
+
+            return lista;
+        }
+
+
+        public IList<TipoProduto> ListarTiposComercializadosCritedio(char selecao)
+        {
+            // Filtro com Where
+            var lista =
+                context.TipoProduto.Where(t => t.Comercializado == selecao)
+                        .OrderByDescending(t => t.DescricaoTipo).ToList<TipoProduto>();
+
+            return lista;
+        }
+
+
+
+        public IList<TipoProduto> ListarTiposComercializados(char selecao)
+        {
+            // Filtro com Where
+            var lista =
+                context.TipoProduto.Where(t => t.Comercializado == selecao && t.IdTipo > 2)
+                        .OrderByDescending(t => t.DescricaoTipo).ToList<TipoProduto>();
+
+            return lista;
+        }
+
+
+
+        public TipoProduto ConsultaPorDescricao(string descricao)
+        {
+            // Retorno único
+            TipoProduto tipo =
+                context.TipoProduto.Where(t => t.DescricaoTipo == descricao)
+                    .FirstOrDefault<TipoProduto>();
+
+            return tipo;
+        }
+
+
+
+        public IList<TipoProduto> ListarTiposParteDescricao(string parteDescricao)
+        {
+            // Filtro com Where e Contains
+            var lista =
+                context.TipoProduto.Where(t => t.DescricaoTipo.Contains(parteDescricao))
+                        .ToList<TipoProduto>();
+
+            return lista;
+        }
+
+
+
+    }
 }

@@ -8,17 +8,19 @@ namespace FiapSmartCity.Controllers
     {
 
         private readonly TipoProdutoRepository tipoProdutoRepository;
+        private readonly ProdutoRepository produtoRepository;
 
         public TipoProdutoController()
         {
             tipoProdutoRepository = new TipoProdutoRepository();
+            produtoRepository = new ProdutoRepository();
         }
 
         [Filtros.LogFilter]
         [HttpGet]
         public IActionResult Index()
         {
-            var listaTipo = tipoProdutoRepository.Listar();
+            var listaTipo = tipoProdutoRepository.ListarOrdenadoPorNomeDescendente();
             return View(listaTipo);
         }
 
@@ -91,6 +93,7 @@ namespace FiapSmartCity.Controllers
             return RedirectToAction("Index", "TipoProduto");
         }
 
-    }
 
+
+    }
 }

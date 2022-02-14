@@ -1,0 +1,63 @@
+﻿@model IEnumerable<FiapSmartCity.Models.Produto>
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Produtos</title>
+</head>
+<body>
+    <h1>Produtos</h1>
+    <p>
+        <!-- uso de TagHelpers para definir o Controller e a Action -->
+        <a asp-controller="Produto" asp-action="Cadastrar">Novo Produto</a>
+    </p>
+
+    <!-- Verifica se a chave "Mensagem" existe no TempData -->
+    @if (@TempData["Mensagem"] != null)
+    {
+        <div class="alert alert-success" role="alert">
+            @TempData["Mensagem"]
+        </div>
+    }
+
+
+    <table class="table" border="1">
+        <tr>
+            <th>Id</th>
+            <th>Nome</th>
+            <th>Tipo</th>
+            <th>Operações</th>
+        </tr>
+
+        @foreach (var item in Model)
+        {
+    <tr>
+        <td>
+            <label>@item.IdProduto</label>
+        </td>
+        <td>
+            <label>@item.NomeProduto</label>
+        </td>
+        <td>
+            <label>@item.Tipo.DescricaoTipo</label>
+        </td>
+        <td>
+
+            <a class="btn btn-warning btn-sm"
+               asp-controller="Produto"
+               asp-action="Editar"
+               asp-route-id="@item.IdProduto">Editar</a>
+
+            <a class="btn btn-danger btn-sm"
+               asp-controller="Produto"
+               asp-action="Excluir"
+               asp-route-id="@item.IdProduto">Excluir</a>
+        </td>
+    </tr>
+        }
+    </table>
+</body>
+</html>
