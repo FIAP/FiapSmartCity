@@ -47,14 +47,16 @@ namespace FiapSmartCity
                 }
 
                 app.UseStaticFiles();
-                //app.UseCookiePolicy();
 
-                app.UseMvc(routes =>
-                {
-                    routes.MapRoute(
-                        name: "default",
-                        template: "{controller=Home}/{action=Index}/{id?}");
+                //netcore3.1
+                app.UseRouting();
+
+                //netcore3.1
+                app.UseEndpoints(endpoints => {
+                    endpoints.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}");
                 });
+
+
                 app.UseCookiePolicy();
             }
     }
